@@ -105,5 +105,4 @@ ls /opt/helmfile-bundle/plugins/helm-diff/
 
 ---
 
-**Made with ❤️ for 오프라인 배포 자동화.**
 

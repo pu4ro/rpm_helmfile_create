@@ -16,7 +16,7 @@ build-with-k8s:
 	docker build --build-arg OS_VERSION=$(OS_VERSION) -t $(DOCKER_IMAGE) -f $(SCRIPT_DIR)/Dockerfile $(SCRIPT_DIR)
 	@echo ""
 	@echo "=== [2/2] K8s 다운로드 + 커스텀 빌드 + createrepo 실행 ==="
-	docker run -it --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE)
+	docker run --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE)
 	@echo ""
 	@echo "=== 완료! ==="
 	@echo ""
@@ -28,7 +28,7 @@ build:
 	docker build --build-arg OS_VERSION=$(OS_VERSION) -t $(DOCKER_IMAGE) -f $(SCRIPT_DIR)/Dockerfile $(SCRIPT_DIR)
 	@echo ""
 	@echo "=== [2/2] 커스텀 패키지 빌드만 실행 ==="
-	docker run -it --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE) /bin/bash -c "/workspace/build-helmfile-bundle.sh"
+	docker run --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE) /bin/bash -c "/workspace/build-helmfile-bundle.sh"
 	@echo ""
 	@echo "=== RPM 빌드 완료 ==="
 	@ls -lh $(SCRIPT_DIR)/*.rpm 2>/dev/null || echo "RPM 파일이 없습니다."

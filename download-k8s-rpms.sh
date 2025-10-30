@@ -5,6 +5,9 @@ set -euo pipefail
 KUBE_VERSION="${KUBE_VERSION:-1.27.16}"
 KUBE_MAJOR_MINOR=$(echo "$KUBE_VERSION" | cut -d. -f1,2)
 
+# 현재 시스템 아키텍처 감지
+ARCH=$(uname -m)
+
 # 작업 디렉토리 설정
 WORKDIR="/tmp/k8s-rpms"
 rm -rf "$WORKDIR"
@@ -14,6 +17,7 @@ echo "======================================"
 echo "  Kubernetes 공식 RPM 다운로드"
 echo "======================================"
 echo "버전: $KUBE_VERSION"
+echo "아키텍처: $ARCH"
 echo ""
 
 # Kubernetes 공식 yum 저장소 설정
@@ -47,7 +51,8 @@ if command -v dnf &> /dev/null && dnf help download &> /dev/null 2>&1; then
   echo "dnf download 사용 중..."
   # --disableexcludes=kubernetes 옵션으로 exclude 무시하고 다운로드
   # --resolve 옵션으로 의존성까지 모두 다운로드
-  dnf download --disableexcludes=kubernetes --resolve \
+  # --arch 옵션으로 현재 시스템 아키텍처만 다운로드
+  dnf download --disableexcludes=kubernetes --resolve --arch=${ARCH} \
     kubeadm-${KUBE_VERSION}-* \
     kubelet-${KUBE_VERSION}-* \
     kubectl-${KUBE_VERSION}-*
@@ -55,7 +60,8 @@ elif command -v yumdownloader &> /dev/null; then
   echo "yumdownloader 사용 중..."
   # --disableexcludes=kubernetes 옵션으로 exclude 무시하고 다운로드
   # --resolve 옵션으로 의존성까지 모두 다운로드
-  yumdownloader --disableexcludes=kubernetes --resolve \
+  # --archlist 옵션으로 현재 시스템 아키텍처만 다운로드
+  yumdownloader --disableexcludes=kubernetes --resolve --archlist=${ARCH} \
     kubeadm-${KUBE_VERSION}-* \
     kubelet-${KUBE_VERSION}-* \
     kubectl-${KUBE_VERSION}-*

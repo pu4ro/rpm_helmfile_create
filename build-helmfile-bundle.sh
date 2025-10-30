@@ -18,7 +18,10 @@ SPECDIR="$WORKDIR/SPECS"
 echo "======================================"
 echo "  개별 컴포넌트 RPM 빌드 시작"
 echo "======================================"
-echo "참고: kubectl, kubelet, kubeadm은 공식 yum 저장소에서 다운로드됩니다"
+echo "참고:"
+echo "  - kubectl, kubelet, kubeadm: Kubernetes 공식 레포에서 다운로드"
+echo "  - containerd.io: Docker 공식 레포에서 다운로드"
+echo "  - helmfile, nerdctl, buildkit, k9s: 커스텀 빌드"
 echo ""
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR/SOURCES" "$SPECDIR" "$WORKDIR/RPMS"
@@ -125,7 +128,7 @@ Summary:        Docker-compatible CLI for containerd
 License:        Apache-2.0
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      x86_64
-Requires:       glibc
+Requires:       glibc containerd.io
 
 %description
 nerdctl is a Docker-compatible CLI for containerd.

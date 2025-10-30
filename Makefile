@@ -73,7 +73,7 @@ createrepo:
 	@echo ""
 	@echo "3. 패키지 설치:"
 	@echo "   sudo dnf clean all"
-	@echo "   sudo dnf install helmfile-bundle kubectl kubelet kubeadm nerdctl buildkit k9s"
+	@echo "   sudo dnf install helmfile-bundle kubectl kubelet kubeadm containerd.io nerdctl buildkit k9s"
 
 # RPM 파일만 정리
 clean:
@@ -109,9 +109,10 @@ help:
 	@echo "  make repo                   - 기존 RPM으로 레포지토리 생성"
 	@echo ""
 	@echo "주요 특징:"
-	@echo "  - kubectl, kubelet, kubeadm은 Kubernetes 공식 yum 저장소에서 다운로드됩니다"
-	@echo "  - 모든 의존성(cri-tools, kubernetes-cni 등)도 함께 다운로드됩니다"
-	@echo "  - helmfile-bundle, nerdctl, buildkit, k9s는 커스텀 빌드됩니다"
+	@echo "  - kubectl, kubelet, kubeadm: Kubernetes 공식 레포에서 다운로드"
+	@echo "  - containerd.io: Docker 공식 레포에서 다운로드 (Kubernetes 1.27 호환)"
+	@echo "  - 모든 의존성(cri-tools, kubernetes-cni, container-selinux 등) 포함"
+	@echo "  - helmfile-bundle, nerdctl, buildkit, k9s: 커스텀 빌드"
 	@echo "  - 모든 패키지는 하나의 yum 레포지토리로 통합됩니다"
 	@echo ""
 	@echo "환경 변수로도 설정 가능:"

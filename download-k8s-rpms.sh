@@ -14,14 +14,14 @@ rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR"
 
 echo "======================================"
-echo "  Kubernetes 공식 RPM 다운로드"
+echo "  Kubernetes + containerd RPM 다운로드"
 echo "======================================"
-echo "버전: $KUBE_VERSION"
+echo "Kubernetes 버전: $KUBE_VERSION"
 echo "아키텍처: $ARCH"
 echo ""
 
 # Kubernetes 공식 yum 저장소 설정
-echo "[1/3] Kubernetes 공식 yum 저장소 설정 중..."
+echo "[1/4] Kubernetes 공식 yum 저장소 설정 중..."
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -32,13 +32,17 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v${KUBE_MAJOR_MINOR}/rpm/repodata/repom
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
+# Docker 공식 yum 저장소 설정
+echo "[2/4] Docker 공식 yum 저장소 설정 중 (containerd.io)..."
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
 # yum 캐시 업데이트
 dnf clean all
 dnf makecache
 echo ""
 
 # 패키지와 의존성 다운로드
-echo "[2/3] Kubernetes 패키지 및 의존성 다운로드 중..."
+echo "[3/4] Kubernetes 패키지 및 의존성 다운로드 중..."
 echo "  - kubeadm-${KUBE_VERSION}"
 echo "  - kubelet-${KUBE_VERSION}"
 echo "  - kubectl-${KUBE_VERSION}"
@@ -74,12 +78,30 @@ else
 fi
 
 echo ""
-echo "[3/3] RPM 파일을 /workspace로 복사 중..."
+echo "[4/4] containerd 및 관련 패키지 다운로드 중..."
+# containerd.io와 container-selinux 다운로드
+if command -v dnf &> /dev/null && dnf help download &> /dev/null 2>&1; then
+  echo "  - containerd.io (Docker 레포)"
+  dnf download --resolve --arch=${ARCH} containerd.io
+  echo "  - container-selinux"
+  dnf download --resolve --arch=noarch container-selinux
+elif command -v yumdownloader &> /dev/null; then
+  echo "  - containerd.io (Docker 레포)"
+  yumdownloader --resolve --archlist=${ARCH} containerd.io
+  echo "  - container-selinux"
+  yumdownloader --resolve --archlist=noarch container-selinux
+fi
+
+echo ""
+echo "RPM 파일을 /workspace로 복사 중..."
 cp "$WORKDIR"/*.rpm /workspace/
 
 echo ""
-echo "다운로드된 Kubernetes RPM 파일:"
-ls -lh /workspace/kube*.rpm /workspace/cri-tools*.rpm /workspace/kubernetes-cni*.rpm 2>/dev/null || true
+echo "다운로드된 패키지 요약:"
+echo "- Kubernetes: kubectl, kubelet, kubeadm, cri-tools, kubernetes-cni"
+echo "- Container Runtime: containerd.io, container-selinux"
+echo ""
+ls -lh /workspace/kube*.rpm /workspace/cri-tools*.rpm /workspace/kubernetes-cni*.rpm /workspace/containerd*.rpm /workspace/container-selinux*.rpm 2>/dev/null || true
 
 echo ""
-echo "Kubernetes 패키지 다운로드 완료!"
+echo "패키지 다운로드 완료!"

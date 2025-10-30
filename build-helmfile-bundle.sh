@@ -148,11 +148,11 @@ Requires:       ansible-core
 
 %description
 Essential Ansible collections for offline environments including:
-- community.general: General purpose modules and plugins
-- community.docker: Docker management
-- kubernetes.core: Kubernetes management
-- ansible.posix: POSIX system modules
-- community.crypto: Cryptography utilities
+- community.general: General purpose modules and plugins (sefcontext, etc.)
+- community.docker: Docker management modules
+- kubernetes.core: Kubernetes cluster management
+- ansible.posix: POSIX system modules (firewalld, mount, selinux, etc.)
+- community.crypto: Cryptography and certificate management
 
 %prep
 %setup -q
@@ -163,7 +163,17 @@ Essential Ansible collections for offline environments including:
 mkdir -p %{buildroot}/usr/share/ansible/collections/ansible_collections
 cd collections
 for tarball in *.tar.gz; do
-    tar xzf "\$tarball" -C %{buildroot}/usr/share/ansible/collections/ansible_collections
+    # 파일명에서 namespace와 collection 추출 (예: community-general-9.5.2.tar.gz)
+    basename="\$(basename "\$tarball" .tar.gz)"
+    namespace="\$(echo "\$basename" | cut -d- -f1)"
+    collection="\$(echo "\$basename" | cut -d- -f2)"
+
+    # namespace/collection 디렉토리 생성
+    target_dir="%{buildroot}/usr/share/ansible/collections/ansible_collections/\$namespace/\$collection"
+    mkdir -p "\$target_dir"
+
+    # tarball 압축 해제
+    tar xzf "\$tarball" -C "\$target_dir"
 done
 # 불필요한 파일 제거 (테스트, CI 설정 등)
 find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".git*" -exec rm -rf {} + 2>/dev/null || true

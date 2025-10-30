@@ -1,7 +1,7 @@
 ARG OS_VERSION=9.3
 FROM rockylinux/rockylinux:${OS_VERSION}
 
-RUN dnf -y install --allowerasing rpm-build tar gzip curl file createrepo_c && \
+RUN dnf -y install --allowerasing rpm-build tar gzip curl file createrepo_c dnf-plugins-core yum-utils && \
     dnf clean all
 
 WORKDIR /workspace

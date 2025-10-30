@@ -42,12 +42,30 @@ echo ""
 
 cd "$WORKDIR"
 
-# --disableexcludes=kubernetes 옵션으로 exclude 무시하고 다운로드
-# --resolve 옵션으로 의존성까지 모두 다운로드
-dnf download --disableexcludes=kubernetes --resolve \
-  kubeadm-${KUBE_VERSION}-* \
-  kubelet-${KUBE_VERSION}-* \
-  kubectl-${KUBE_VERSION}-*
+# dnf download 또는 yumdownloader 사용 (가능한 것 자동 선택)
+if command -v dnf &> /dev/null && dnf help download &> /dev/null 2>&1; then
+  echo "dnf download 사용 중..."
+  # --disableexcludes=kubernetes 옵션으로 exclude 무시하고 다운로드
+  # --resolve 옵션으로 의존성까지 모두 다운로드
+  dnf download --disableexcludes=kubernetes --resolve \
+    kubeadm-${KUBE_VERSION}-* \
+    kubelet-${KUBE_VERSION}-* \
+    kubectl-${KUBE_VERSION}-*
+elif command -v yumdownloader &> /dev/null; then
+  echo "yumdownloader 사용 중..."
+  # --disableexcludes=kubernetes 옵션으로 exclude 무시하고 다운로드
+  # --resolve 옵션으로 의존성까지 모두 다운로드
+  yumdownloader --disableexcludes=kubernetes --resolve \
+    kubeadm-${KUBE_VERSION}-* \
+    kubelet-${KUBE_VERSION}-* \
+    kubectl-${KUBE_VERSION}-*
+else
+  echo "ERROR: dnf download 또는 yumdownloader를 찾을 수 없습니다."
+  echo "다음 중 하나를 설치해주세요:"
+  echo "  - dnf-plugins-core (dnf download 제공)"
+  echo "  - yum-utils (yumdownloader 제공)"
+  exit 1
+fi
 
 echo ""
 echo "[3/3] RPM 파일을 /workspace로 복사 중..."

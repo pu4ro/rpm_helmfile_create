@@ -1,6 +1,6 @@
-FROM rockylinux/rockylinux:9.4
+FROM rockylinux/rockylinux:9.3
 
-RUN dnf -y install rpm-build tar gzip && \
+RUN dnf -y install rpm-build tar gzip curl file && \
     dnf clean all
 
 WORKDIR /workspace

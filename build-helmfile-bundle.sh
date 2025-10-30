@@ -21,7 +21,8 @@ echo "======================================"
 echo "참고:"
 echo "  - kubectl, kubelet, kubeadm: Kubernetes 공식 레포에서 다운로드"
 echo "  - containerd.io: Docker 공식 레포에서 다운로드"
-echo "  - helmfile, nerdctl, buildkit, k9s: 커스텀 빌드"
+echo "  - ansible-core: Rocky Linux 레포에서 다운로드"
+echo "  - helmfile, nerdctl, buildkit, k9s, ansible-collections: 커스텀 빌드"
 echo ""
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR/SOURCES" "$SPECDIR" "$WORKDIR/RPMS"
@@ -30,7 +31,7 @@ mkdir -p "$WORKDIR/SOURCES" "$SPECDIR" "$WORKDIR/RPMS"
 # 1. helmfile-bundle 패키지 빌드
 # ============================================
 echo ""
-echo "[1/4] helmfile-bundle 빌드 중..."
+echo "[1/5] helmfile-bundle 빌드 중..."
 BUNDLE_NAME="helmfile-bundle"
 BUNDLE_DIR="$WORKDIR/SOURCES/${BUNDLE_NAME}-${HELMFILE_VERSION}"
 mkdir -p "$BUNDLE_DIR/plugins/helm-diff"
@@ -106,7 +107,90 @@ rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/${BUNDLE_NAME}.spec"
 # 2. nerdctl 패키지 빌드
 # ============================================
 echo ""
-echo "[2/4] nerdctl 빌드 중..."
+echo "[2/5] ansible-collections 빌드 중..."
+
+ANSIBLE_VERSION="1.0.0"
+ANSIBLE_COLLECTIONS_DIR="$WORKDIR/SOURCES/ansible-collections-${ANSIBLE_VERSION}"
+mkdir -p "$ANSIBLE_COLLECTIONS_DIR/collections"
+
+echo "  - 필수 collections 다운로드 중..."
+# ansible-galaxy를 사용하기 위해 임시로 ansible-core 설치
+dnf install -y ansible-core -q 2>&1 | tail -3
+
+# 주요 collections 다운로드
+cd "$ANSIBLE_COLLECTIONS_DIR/collections"
+echo "    * community.general"
+ansible-galaxy collection download community.general -p . 2>&1 | grep -v "^$"
+echo "    * community.docker"
+ansible-galaxy collection download community.docker -p . 2>&1 | grep -v "^$"
+echo "    * kubernetes.core"
+ansible-galaxy collection download kubernetes.core -p . 2>&1 | grep -v "^$"
+echo "    * ansible.posix"
+ansible-galaxy collection download ansible.posix -p . 2>&1 | grep -v "^$"
+echo "    * community.crypto"
+ansible-galaxy collection download community.crypto -p . 2>&1 | grep -v "^$"
+
+cd "$WORKDIR/SOURCES"
+tar czf "ansible-collections-${ANSIBLE_VERSION}.tar.gz" "ansible-collections-${ANSIBLE_VERSION}"
+
+cat <<EOF > "$SPECDIR/ansible-collections.spec"
+%global debug_package %{nil}
+%global __brp_mangle_shebangs %{nil}
+%global __brp_python_bytecompile %{nil}
+Name:           ansible-collections
+Version:        ${ANSIBLE_VERSION}
+Release:        1%{?dist}
+Summary:        Essential Ansible collections for offline use
+License:        GPL-3.0-or-later
+Source0:        %{name}-%{version}.tar.gz
+BuildArch:      noarch
+Requires:       ansible-core
+
+%description
+Essential Ansible collections for offline environments including:
+- community.general: General purpose modules and plugins
+- community.docker: Docker management
+- kubernetes.core: Kubernetes management
+- ansible.posix: POSIX system modules
+- community.crypto: Cryptography utilities
+
+%prep
+%setup -q
+
+%build
+
+%install
+mkdir -p %{buildroot}/usr/share/ansible/collections/ansible_collections
+cd collections
+for tarball in *.tar.gz; do
+    tar xzf "\$tarball" -C %{buildroot}/usr/share/ansible/collections/ansible_collections
+done
+# 불필요한 파일 제거 (테스트, CI 설정 등)
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".git*" -exec rm -rf {} + 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".azure-pipelines" -exec rm -rf {} + 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".yamllint*" -delete 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".ansible-lint*" -delete 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".flake8" -delete 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".mypy.ini" -delete 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".pylintrc" -delete 2>/dev/null || true
+find %{buildroot}/usr/share/ansible/collections/ansible_collections -name ".isort.cfg" -delete 2>/dev/null || true
+
+%files
+/usr/share/ansible/collections/ansible_collections
+
+%changelog
+* $(date '+%a %b %d %Y') Admin <admin@example.com> - ${ANSIBLE_VERSION}-1
+- Essential Ansible collections bundle for offline use
+EOF
+
+rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/ansible-collections.spec"
+
+# ============================================
+# 3. nerdctl 패키지 빌드
+# ============================================
+echo ""
+echo "[3/5] nerdctl 빌드 중..."
 NERDCTL_DIR="$WORKDIR/SOURCES/nerdctl-${NERDCTL_VERSION}"
 mkdir -p "$NERDCTL_DIR"
 
@@ -157,7 +241,7 @@ rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/nerdctl.spec"
 # 3. buildkit 패키지 빌드
 # ============================================
 echo ""
-echo "[3/4] buildkit 빌드 중..."
+echo "[4/5] buildkit 빌드 중..."
 BUILDKIT_DIR="$WORKDIR/SOURCES/buildkit-${BUILDKIT_VERSION}"
 mkdir -p "$BUILDKIT_DIR"
 
@@ -252,7 +336,7 @@ rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/buildkit.spec"
 # 4. k9s 패키지 빌드
 # ============================================
 echo ""
-echo "[4/4] k9s 빌드 중..."
+echo "[5/5] k9s 빌드 중..."
 K9S_DIR="$WORKDIR/SOURCES/k9s-${K9S_VERSION}"
 mkdir -p "$K9S_DIR"
 

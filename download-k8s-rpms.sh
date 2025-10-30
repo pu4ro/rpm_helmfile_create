@@ -78,18 +78,22 @@ else
 fi
 
 echo ""
-echo "[4/4] containerd 및 관련 패키지 다운로드 중..."
+echo "[4/4] containerd, ansible 및 관련 패키지 다운로드 중..."
 # containerd.io와 container-selinux 다운로드
 if command -v dnf &> /dev/null && dnf help download &> /dev/null 2>&1; then
   echo "  - containerd.io (Docker 레포)"
   dnf download --resolve --arch=${ARCH} containerd.io
   echo "  - container-selinux"
   dnf download --resolve --arch=noarch container-selinux
+  echo "  - ansible-core"
+  dnf download --resolve --arch=${ARCH} ansible-core
 elif command -v yumdownloader &> /dev/null; then
   echo "  - containerd.io (Docker 레포)"
   yumdownloader --resolve --archlist=${ARCH} containerd.io
   echo "  - container-selinux"
   yumdownloader --resolve --archlist=noarch container-selinux
+  echo "  - ansible-core"
+  yumdownloader --resolve --archlist=${ARCH} ansible-core
 fi
 
 echo ""
@@ -100,8 +104,9 @@ echo ""
 echo "다운로드된 패키지 요약:"
 echo "- Kubernetes: kubectl, kubelet, kubeadm, cri-tools, kubernetes-cni"
 echo "- Container Runtime: containerd.io, container-selinux"
+echo "- Automation: ansible-core"
 echo ""
-ls -lh /workspace/kube*.rpm /workspace/cri-tools*.rpm /workspace/kubernetes-cni*.rpm /workspace/containerd*.rpm /workspace/container-selinux*.rpm 2>/dev/null || true
+ls -lh /workspace/kube*.rpm /workspace/cri-tools*.rpm /workspace/kubernetes-cni*.rpm /workspace/containerd*.rpm /workspace/container-selinux*.rpm /workspace/ansible*.rpm 2>/dev/null || true
 
 echo ""
 echo "패키지 다운로드 완료!"

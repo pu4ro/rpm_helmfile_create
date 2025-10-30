@@ -73,7 +73,7 @@ createrepo:
 	@echo ""
 	@echo "3. 패키지 설치:"
 	@echo "   sudo dnf clean all"
-	@echo "   sudo dnf install helmfile-bundle kubectl kubelet kubeadm containerd.io nerdctl buildkit k9s"
+	@echo "   sudo dnf install helmfile-bundle kubectl kubelet kubeadm containerd.io nerdctl buildkit k9s ansible-core ansible-collections"
 
 # RPM 파일만 정리
 clean:
@@ -111,6 +111,8 @@ help:
 	@echo "주요 특징:"
 	@echo "  - kubectl, kubelet, kubeadm: Kubernetes 공식 레포에서 다운로드"
 	@echo "  - containerd.io: Docker 공식 레포에서 다운로드 (Kubernetes 1.27 호환)"
+	@echo "  - ansible-core: Rocky Linux 레포에서 다운로드"
+	@echo "  - ansible-collections: 주요 collections 포함 (community.general, kubernetes.core 등)"
 	@echo "  - 모든 의존성(cri-tools, kubernetes-cni, container-selinux 등) 포함"
 	@echo "  - helmfile-bundle, nerdctl, buildkit, k9s: 커스텀 빌드"
 	@echo "  - 모든 패키지는 하나의 yum 레포지토리로 통합됩니다"

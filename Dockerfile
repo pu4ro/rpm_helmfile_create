@@ -6,9 +6,12 @@ RUN dnf -y install --allowerasing rpm-build tar gzip curl file createrepo_c && \
 
 WORKDIR /workspace
 
+# 모든 빌드 스크립트 복사
 COPY build-helmfile-bundle.sh /workspace/
-RUN chmod +x /workspace/build-helmfile-bundle.sh
+COPY download-k8s-rpms.sh /workspace/
+COPY build-all-and-repo.sh /workspace/
+RUN chmod +x /workspace/*.sh
 
-# 빌드 끝난 뒤에도 컨테이너가 종료되지 않게 함
-CMD ["/bin/bash", "-c", "/workspace/build-helmfile-bundle.sh"]
+# 통합 빌드 스크립트 실행 (K8s 다운로드 + 커스텀 빌드 + createrepo)
+CMD ["/bin/bash", "-c", "/workspace/build-all-and-repo.sh"]
 

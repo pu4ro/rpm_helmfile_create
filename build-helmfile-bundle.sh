@@ -18,6 +18,8 @@ SPECDIR="$WORKDIR/SPECS"
 echo "======================================"
 echo "  개별 컴포넌트 RPM 빌드 시작"
 echo "======================================"
+echo "참고: kubectl, kubelet, kubeadm은 공식 yum 저장소에서 다운로드됩니다"
+echo ""
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR/SOURCES" "$SPECDIR" "$WORKDIR/RPMS"
 
@@ -25,7 +27,7 @@ mkdir -p "$WORKDIR/SOURCES" "$SPECDIR" "$WORKDIR/RPMS"
 # 1. helmfile-bundle 패키지 빌드
 # ============================================
 echo ""
-echo "[1/7] helmfile-bundle 빌드 중..."
+echo "[1/4] helmfile-bundle 빌드 중..."
 BUNDLE_NAME="helmfile-bundle"
 BUNDLE_DIR="$WORKDIR/SOURCES/${BUNDLE_NAME}-${HELMFILE_VERSION}"
 mkdir -p "$BUNDLE_DIR/plugins/helm-diff"
@@ -98,157 +100,10 @@ EOF
 rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/${BUNDLE_NAME}.spec"
 
 # ============================================
-# 2. kubectl 패키지 빌드
+# 2. nerdctl 패키지 빌드
 # ============================================
 echo ""
-echo "[2/7] kubectl 빌드 중..."
-KUBECTL_DIR="$WORKDIR/SOURCES/kubectl-${KUBE_VERSION}"
-mkdir -p "$KUBECTL_DIR"
-
-echo "  - kubectl 다운로드"
-curl -fsSL -o "$KUBECTL_DIR/kubectl" "https://dl.k8s.io/release/v${KUBE_VERSION}/bin/linux/${ARCH}/kubectl"
-chmod +x "$KUBECTL_DIR/kubectl"
-
-cd "$WORKDIR/SOURCES"
-tar czf "kubectl-${KUBE_VERSION}.tar.gz" "kubectl-${KUBE_VERSION}"
-
-cat <<EOF > "$SPECDIR/kubectl.spec"
-%global debug_package %{nil}
-Name:           kubectl
-Version:        ${KUBE_VERSION}
-Release:        1%{?dist}
-Summary:        Kubernetes command-line tool
-License:        Apache-2.0
-Source0:        %{name}-%{version}.tar.gz
-BuildArch:      x86_64
-Requires:       glibc
-
-%description
-kubectl is a command-line tool for controlling Kubernetes clusters.
-
-%prep
-%setup -q
-
-%build
-
-%install
-mkdir -p %{buildroot}/usr/local/bin
-cp kubectl %{buildroot}/usr/local/bin/kubectl
-chmod +x %{buildroot}/usr/local/bin/kubectl
-
-%files
-/usr/local/bin/kubectl
-
-%changelog
-* $(date '+%a %b %d %Y') Admin <admin@example.com> - ${KUBE_VERSION}-1
-- kubectl v${KUBE_VERSION}
-EOF
-
-rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/kubectl.spec"
-
-# ============================================
-# 3. kubelet 패키지 빌드
-# ============================================
-echo ""
-echo "[3/7] kubelet 빌드 중..."
-KUBELET_DIR="$WORKDIR/SOURCES/kubelet-${KUBE_VERSION}"
-mkdir -p "$KUBELET_DIR"
-
-echo "  - kubelet 다운로드"
-curl -fsSL -o "$KUBELET_DIR/kubelet" "https://dl.k8s.io/release/v${KUBE_VERSION}/bin/linux/${ARCH}/kubelet"
-chmod +x "$KUBELET_DIR/kubelet"
-
-cd "$WORKDIR/SOURCES"
-tar czf "kubelet-${KUBE_VERSION}.tar.gz" "kubelet-${KUBE_VERSION}"
-
-cat <<EOF > "$SPECDIR/kubelet.spec"
-%global debug_package %{nil}
-Name:           kubelet
-Version:        ${KUBE_VERSION}
-Release:        1%{?dist}
-Summary:        Kubernetes node agent
-License:        Apache-2.0
-Source0:        %{name}-%{version}.tar.gz
-BuildArch:      x86_64
-Requires:       glibc
-
-%description
-The kubelet is the primary node agent that runs on each node.
-
-%prep
-%setup -q
-
-%build
-
-%install
-mkdir -p %{buildroot}/usr/local/bin
-cp kubelet %{buildroot}/usr/local/bin/kubelet
-chmod +x %{buildroot}/usr/local/bin/kubelet
-
-%files
-/usr/local/bin/kubelet
-
-%changelog
-* $(date '+%a %b %d %Y') Admin <admin@example.com> - ${KUBE_VERSION}-1
-- kubelet v${KUBE_VERSION}
-EOF
-
-rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/kubelet.spec"
-
-# ============================================
-# 4. kubeadm 패키지 빌드
-# ============================================
-echo ""
-echo "[4/7] kubeadm 빌드 중..."
-KUBEADM_DIR="$WORKDIR/SOURCES/kubeadm-${KUBE_VERSION}"
-mkdir -p "$KUBEADM_DIR"
-
-echo "  - kubeadm 다운로드"
-curl -fsSL -o "$KUBEADM_DIR/kubeadm" "https://dl.k8s.io/release/v${KUBE_VERSION}/bin/linux/${ARCH}/kubeadm"
-chmod +x "$KUBEADM_DIR/kubeadm"
-
-cd "$WORKDIR/SOURCES"
-tar czf "kubeadm-${KUBE_VERSION}.tar.gz" "kubeadm-${KUBE_VERSION}"
-
-cat <<EOF > "$SPECDIR/kubeadm.spec"
-%global debug_package %{nil}
-Name:           kubeadm
-Version:        ${KUBE_VERSION}
-Release:        1%{?dist}
-Summary:        Kubernetes cluster bootstrapping tool
-License:        Apache-2.0
-Source0:        %{name}-%{version}.tar.gz
-BuildArch:      x86_64
-Requires:       glibc
-
-%description
-kubeadm is a tool for quickly installing Kubernetes and setting up a secure cluster.
-
-%prep
-%setup -q
-
-%build
-
-%install
-mkdir -p %{buildroot}/usr/local/bin
-cp kubeadm %{buildroot}/usr/local/bin/kubeadm
-chmod +x %{buildroot}/usr/local/bin/kubeadm
-
-%files
-/usr/local/bin/kubeadm
-
-%changelog
-* $(date '+%a %b %d %Y') Admin <admin@example.com> - ${KUBE_VERSION}-1
-- kubeadm v${KUBE_VERSION}
-EOF
-
-rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/kubeadm.spec"
-
-# ============================================
-# 5. nerdctl 패키지 빌드
-# ============================================
-echo ""
-echo "[5/7] nerdctl 빌드 중..."
+echo "[2/4] nerdctl 빌드 중..."
 NERDCTL_DIR="$WORKDIR/SOURCES/nerdctl-${NERDCTL_VERSION}"
 mkdir -p "$NERDCTL_DIR"
 
@@ -296,10 +151,10 @@ EOF
 rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/nerdctl.spec"
 
 # ============================================
-# 6. buildkit 패키지 빌드
+# 3. buildkit 패키지 빌드
 # ============================================
 echo ""
-echo "[6/7] buildkit 빌드 중..."
+echo "[3/4] buildkit 빌드 중..."
 BUILDKIT_DIR="$WORKDIR/SOURCES/buildkit-${BUILDKIT_VERSION}"
 mkdir -p "$BUILDKIT_DIR"
 
@@ -350,10 +205,10 @@ EOF
 rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/buildkit.spec"
 
 # ============================================
-# 7. k9s 패키지 빌드
+# 4. k9s 패키지 빌드
 # ============================================
 echo ""
-echo "[7/7] k9s 빌드 중..."
+echo "[4/4] k9s 빌드 중..."
 K9S_DIR="$WORKDIR/SOURCES/k9s-${K9S_VERSION}"
 mkdir -p "$K9S_DIR"
 

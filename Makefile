@@ -1,4 +1,4 @@
-.PHONY: all build repo createrepo clean clean-all help
+.PHONY: all build build-with-k8s repo createrepo clean clean-all help
 
 # 변수 설정
 DOCKER_IMAGE = helmfile-bundle-builder
@@ -7,18 +7,30 @@ REPO_DIR = $(SCRIPT_DIR)/yum-repo
 RPMS_DIR = $(SCRIPT_DIR)
 OS_VERSION ?= 9.3
 
-# 기본 타겟
-all: build repo
+# 기본 타겟 (K8s 공식 패키지 포함)
+all: build-with-k8s
 
-# RPM 빌드
-build:
-	@echo "=== [1/3] 빌드 컨테이너 이미지 생성 (OS_VERSION=$(OS_VERSION)) ==="
+# K8s 공식 패키지 + 커스텀 빌드 + createrepo (통합 빌드)
+build-with-k8s:
+	@echo "=== [1/2] 빌드 컨테이너 이미지 생성 (OS_VERSION=$(OS_VERSION)) ==="
 	docker build --build-arg OS_VERSION=$(OS_VERSION) -t $(DOCKER_IMAGE) -f $(SCRIPT_DIR)/Dockerfile $(SCRIPT_DIR)
 	@echo ""
-	@echo "=== [2/3] 컨테이너 내 빌드 스크립트 실행 ==="
+	@echo "=== [2/2] K8s 다운로드 + 커스텀 빌드 + createrepo 실행 ==="
 	docker run -it --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE)
 	@echo ""
-	@echo "=== [3/3] RPM 빌드 완료 ==="
+	@echo "=== 완료! ==="
+	@echo ""
+	@echo "생성된 레포지토리: $(REPO_DIR)"
+
+# 커스텀 RPM만 빌드 (K8s 공식 패키지 제외)
+build:
+	@echo "=== [1/2] 빌드 컨테이너 이미지 생성 (OS_VERSION=$(OS_VERSION)) ==="
+	docker build --build-arg OS_VERSION=$(OS_VERSION) -t $(DOCKER_IMAGE) -f $(SCRIPT_DIR)/Dockerfile $(SCRIPT_DIR)
+	@echo ""
+	@echo "=== [2/2] 커스텀 패키지 빌드만 실행 ==="
+	docker run -it --rm -v $(SCRIPT_DIR):/workspace $(DOCKER_IMAGE) /bin/bash -c "/workspace/build-helmfile-bundle.sh"
+	@echo ""
+	@echo "=== RPM 빌드 완료 ==="
 	@ls -lh $(SCRIPT_DIR)/*.rpm 2>/dev/null || echo "RPM 파일이 없습니다."
 
 # YUM 레포지토리 생성
@@ -78,22 +90,29 @@ clean-all: clean
 # 도움말
 help:
 	@echo "사용 가능한 Make 타겟:"
-	@echo "  make build       - RPM 패키지 빌드"
-	@echo "  make repo        - YUM 레포지토리 생성 (createrepo 실행)"
-	@echo "  make createrepo  - repo와 동일"
-	@echo "  make all         - 빌드 + 레포지토리 생성 (기본값)"
-	@echo "  make clean       - RPM 파일 삭제"
-	@echo "  make clean-all   - RPM 파일 + 레포지토리 삭제"
-	@echo "  make help        - 이 도움말 표시"
+	@echo "  make all              - K8s 공식 패키지 다운로드 + 커스텀 빌드 + createrepo (기본값)"
+	@echo "  make build-with-k8s   - K8s 공식 패키지 다운로드 + 커스텀 빌드 + createrepo (all과 동일)"
+	@echo "  make build            - 커스텀 RPM 패키지만 빌드 (K8s 제외)"
+	@echo "  make repo             - YUM 레포지토리 생성 (createrepo 실행)"
+	@echo "  make createrepo       - repo와 동일"
+	@echo "  make clean            - RPM 파일 삭제"
+	@echo "  make clean-all        - RPM 파일 + 레포지토리 삭제"
+	@echo "  make help             - 이 도움말 표시"
 	@echo ""
 	@echo "변수:"
-	@echo "  OS_VERSION       - Rocky Linux 버전 (기본값: 9.3)"
+	@echo "  OS_VERSION            - Rocky Linux 버전 (기본값: 9.3)"
 	@echo ""
 	@echo "예제:"
-	@echo "  make                        - 전체 빌드 및 레포지토리 생성 (Rocky 9.3)"
-	@echo "  make OS_VERSION=9.4         - Rocky Linux 9.4로 빌드"
-	@echo "  make OS_VERSION=8.9 build   - Rocky Linux 8.9로 RPM만 빌드"
+	@echo "  make                        - K8s + 커스텀 빌드 + createrepo (Rocky 9.3)"
+	@echo "  make OS_VERSION=9.4         - Rocky Linux 9.4로 전체 빌드"
+	@echo "  make OS_VERSION=8.9 build   - Rocky Linux 8.9로 커스텀 RPM만 빌드"
 	@echo "  make repo                   - 기존 RPM으로 레포지토리 생성"
+	@echo ""
+	@echo "주요 특징:"
+	@echo "  - kubectl, kubelet, kubeadm은 Kubernetes 공식 yum 저장소에서 다운로드됩니다"
+	@echo "  - 모든 의존성(cri-tools, kubernetes-cni 등)도 함께 다운로드됩니다"
+	@echo "  - helmfile-bundle, nerdctl, buildkit, k9s는 커스텀 빌드됩니다"
+	@echo "  - 모든 패키지는 하나의 yum 레포지토리로 통합됩니다"
 	@echo ""
 	@echo "환경 변수로도 설정 가능:"
 	@echo "  OS_VERSION=9.4 make"

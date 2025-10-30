@@ -1,0 +1,5 @@
+# RPM 파일
+*.rpm
+
+# YUM 레포지토리
+yum-repo/

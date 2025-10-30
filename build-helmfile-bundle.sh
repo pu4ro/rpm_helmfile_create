@@ -8,7 +8,7 @@ HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.9.7}"
 KUBE_VERSION="${KUBE_VERSION:-1.27.16}"
 NERDCTL_VERSION="${NERDCTL_VERSION:-1.6.0}"
 BUILDKIT_VERSION="${BUILDKIT_VERSION:-0.12.2}"
-K9S_VERSION="${K9S_VERSION:-0.32.5}"
+K9S_VERSION="${K9S_VERSION:-$(curl -s https://api.github.com/repos/derailed/k9s/releases/latest | grep -oP '"tag_name": "\K[^"]+' | sed 's/^v//')}"
 
 ARCH=amd64
 OS=linux

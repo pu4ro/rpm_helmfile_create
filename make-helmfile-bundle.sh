@@ -3,9 +3,10 @@ set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 DOCKER_IMAGE=helmfile-bundle-builder
+OS_VERSION=${OS_VERSION:-9.3}
 
-echo "=== [1/3] 빌드 컨테이너 이미지 생성 ==="
-docker build -t $DOCKER_IMAGE -f "$SCRIPT_DIR/Dockerfile" "$SCRIPT_DIR"
+echo "=== [1/3] 빌드 컨테이너 이미지 생성 (OS_VERSION=$OS_VERSION) ==="
+docker build --build-arg OS_VERSION=$OS_VERSION -t $DOCKER_IMAGE -f "$SCRIPT_DIR/Dockerfile" "$SCRIPT_DIR"
 
 echo
 echo "=== [2/3] 컨테이너 내 빌드 스크립트 실행 및 컨테이너 유지(자동종료X) ==="

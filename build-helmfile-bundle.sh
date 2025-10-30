@@ -179,7 +179,7 @@ Summary:        Concurrent, cache-efficient, and Dockerfile-agnostic builder too
 License:        Apache-2.0
 Source0:        %{name}-%{version}.tar.gz
 BuildArch:      x86_64
-Requires:       glibc
+Requires:       glibc containerd.io
 
 %description
 BuildKit is a toolkit for converting source code to build artifacts in an efficient, expressive and repeatable manner.
@@ -196,13 +196,54 @@ cp buildctl %{buildroot}/usr/local/bin/buildctl
 chmod +x %{buildroot}/usr/local/bin/buildkitd
 chmod +x %{buildroot}/usr/local/bin/buildctl
 
+# buildkit 설정 파일
+mkdir -p %{buildroot}/etc/buildkit
+cat <<EOFC > %{buildroot}/etc/buildkit/buildkitd.toml
+[worker.oci]
+  enabled = false
+
+[worker.containerd]
+  enabled = true
+  namespace = "k8s.io"
+EOFC
+
+# systemd 서비스 파일
+mkdir -p %{buildroot}/usr/lib/systemd/system
+cat <<EOFS > %{buildroot}/usr/lib/systemd/system/buildkit.service
+[Unit]
+Description=BuildKit
+Documentation=https://github.com/moby/buildkit
+Requires=containerd.service
+After=containerd.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/buildkitd --config /etc/buildkit/buildkitd.toml
+Restart=always
+RestartSec=5
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOFS
+
 %files
 /usr/local/bin/buildkitd
 /usr/local/bin/buildctl
+/etc/buildkit/buildkitd.toml
+/usr/lib/systemd/system/buildkit.service
+
+%post
+systemctl daemon-reload
 
 %changelog
 * $(date '+%a %b %d %Y') Admin <admin@example.com> - ${BUILDKIT_VERSION}-1
-- buildkit v${BUILDKIT_VERSION}
+- buildkit v${BUILDKIT_VERSION} with containerd support and systemd service
 EOF
 
 rpmbuild --define "_topdir $WORKDIR" -ba "$SPECDIR/buildkit.spec"

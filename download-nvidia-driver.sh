@@ -7,7 +7,7 @@ set -e
 # 기본값 설정
 NVIDIA_BASE_URL="${NVIDIA_BASE_URL:-https://us.download.nvidia.com/tesla}"
 NVIDIA_DRIVER_VERSION="${NVIDIA_DRIVER_VERSION:-570.124.06}"
-DOWNLOAD_DIR="${DOWNLOAD_DIR:-/workspace/yum-repo/Packages}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR:-/workspace/yum-repo}"
 
 echo "======================================"
 echo "NVIDIA 드라이버 다운로드"

@@ -83,11 +83,11 @@ nvidia:
 	@echo "  NVIDIA_DRIVER_VERSION=${NVIDIA_DRIVER_VERSION}"
 	@echo "  NVIDIA_BASE_URL=${NVIDIA_BASE_URL}"
 	@echo ""
-	@mkdir -p $(REPO_DIR)/Packages
-	DOWNLOAD_DIR=$(REPO_DIR)/Packages ./download-nvidia-driver.sh
+	@mkdir -p $(REPO_DIR)
+	DOWNLOAD_DIR=$(REPO_DIR) ./download-nvidia-driver.sh
 	@echo ""
 	@echo "=== 다운로드 완료! ==="
-	@ls -lh $(REPO_DIR)/Packages/NVIDIA-Linux-*.run 2>/dev/null || echo "파일을 찾을 수 없습니다."
+	@ls -lh $(REPO_DIR)/NVIDIA-Linux-*.run 2>/dev/null || echo "파일을 찾을 수 없습니다."
 
 # RPM 파일만 정리
 clean:

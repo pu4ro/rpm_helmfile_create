@@ -60,7 +60,7 @@ export NVIDIA_BASE_URL=https://us.download.nvidia.com/tesla
 make nvidia
 ```
 
-다운로드된 드라이버는 `yum-repo/Packages/` 디렉토리에 저장됩니다.
+다운로드된 드라이버는 `yum-repo/` 디렉토리에 저장됩니다.
 
 **특정 OS 버전으로 빌드**
 ```bash

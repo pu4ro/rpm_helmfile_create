@@ -1,4 +1,4 @@
-.PHONY: all build build-with-k8s repo createrepo clean clean-all help
+.PHONY: all build build-with-k8s repo createrepo nvidia clean clean-all help
 
 # 변수 설정
 DOCKER_IMAGE = helmfile-bundle-builder
@@ -75,6 +75,20 @@ createrepo:
 	@echo "   sudo dnf clean all"
 	@echo "   sudo dnf install helmfile-bundle kubectl kubelet kubeadm containerd.io nerdctl buildkit k9s ansible-core ansible-collections"
 
+# NVIDIA 드라이버 다운로드
+nvidia:
+	@echo "=== NVIDIA 드라이버 다운로드 ==="
+	@echo ""
+	@echo "환경변수 설정:"
+	@echo "  NVIDIA_DRIVER_VERSION=${NVIDIA_DRIVER_VERSION}"
+	@echo "  NVIDIA_BASE_URL=${NVIDIA_BASE_URL}"
+	@echo ""
+	@mkdir -p $(REPO_DIR)/Packages
+	DOWNLOAD_DIR=$(REPO_DIR)/Packages ./download-nvidia-driver.sh
+	@echo ""
+	@echo "=== 다운로드 완료! ==="
+	@ls -lh $(REPO_DIR)/Packages/NVIDIA-Linux-*.run 2>/dev/null || echo "파일을 찾을 수 없습니다."
+
 # RPM 파일만 정리
 clean:
 	@echo "RPM 파일 정리 중..."
@@ -95,18 +109,23 @@ help:
 	@echo "  make build            - 커스텀 RPM 패키지만 빌드 (K8s 제외)"
 	@echo "  make repo             - YUM 레포지토리 생성 (createrepo 실행)"
 	@echo "  make createrepo       - repo와 동일"
+	@echo "  make nvidia           - NVIDIA 드라이버 다운로드 (yum-repo/Packages 디렉토리)"
 	@echo "  make clean            - RPM 파일 삭제"
 	@echo "  make clean-all        - RPM 파일 + 레포지토리 삭제"
 	@echo "  make help             - 이 도움말 표시"
 	@echo ""
 	@echo "변수:"
 	@echo "  OS_VERSION            - Rocky Linux 버전 (기본값: 9.3)"
+	@echo "  NVIDIA_DRIVER_VERSION - NVIDIA 드라이버 버전 (기본값: 570.124.06)"
+	@echo "  NVIDIA_BASE_URL       - NVIDIA 다운로드 베이스 URL (기본값: https://us.download.nvidia.com/tesla)"
 	@echo ""
 	@echo "예제:"
 	@echo "  make                        - K8s + 커스텀 빌드 + createrepo (Rocky 9.3)"
 	@echo "  make OS_VERSION=9.4         - Rocky Linux 9.4로 전체 빌드"
 	@echo "  make OS_VERSION=8.9 build   - Rocky Linux 8.9로 커스텀 RPM만 빌드"
 	@echo "  make repo                   - 기존 RPM으로 레포지토리 생성"
+	@echo "  make nvidia                 - NVIDIA 드라이버 다운로드 (기본 버전)"
+	@echo "  make nvidia NVIDIA_DRIVER_VERSION=550.90.07  - 특정 버전 다운로드"
 	@echo ""
 	@echo "주요 특징:"
 	@echo "  - kubectl, kubelet, kubeadm: Kubernetes 공식 레포에서 다운로드"

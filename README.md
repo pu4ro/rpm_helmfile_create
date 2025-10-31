@@ -46,6 +46,22 @@ make repo
 make createrepo
 ```
 
+**NVIDIA 드라이버 다운로드**
+```bash
+# 기본 버전 다운로드 (570.124.06)
+make nvidia
+
+# 특정 버전 다운로드
+make nvidia NVIDIA_DRIVER_VERSION=550.90.07
+
+# 환경변수로 설정
+export NVIDIA_DRIVER_VERSION=550.90.07
+export NVIDIA_BASE_URL=https://us.download.nvidia.com/tesla
+make nvidia
+```
+
+다운로드된 드라이버는 `yum-repo/Packages/` 디렉토리에 저장됩니다.
+
 **특정 OS 버전으로 빌드**
 ```bash
 # Rocky Linux 9.4로 빌드
